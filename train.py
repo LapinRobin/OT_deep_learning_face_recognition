@@ -4,6 +4,7 @@ import torch.optim as optim
 from load_data import train_loader, valid_loader
 from net import Net
 import time
+from tqdm import tqdm
 
 if __name__ == '__main__':
     # Device configuration
@@ -16,73 +17,44 @@ if __name__ == '__main__':
 
     print(f'Using device: {device}')
 
-    # Print dataset information
-    print("\nDataset Information:")
-    sample_batch, sample_labels = next(iter(train_loader))
-    print(f"Input batch shape: {sample_batch.shape}")
-    print(f"Labels shape: {sample_labels.shape}")
-    print(f"Number of training batches: {len(train_loader)}")
-    print(f"Number of validation batches: {len(valid_loader)}")
-
     # Hyperparameters
-    n_epochs = 10
+    n_epochs = 3
     learning_rate = 0.001
-    print(f"\nHyperparameters:")
-    print(f"Number of epochs: {n_epochs}")
-    print(f"Learning rate: {learning_rate}")
 
     # Initialize the model
-    print("\nInitializing model...")
     model = Net().to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    print("Model initialized successfully")
-
-    # Print model parameters
-    total_params = sum(p.numel() for p in model.parameters())
-    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"\nModel Statistics:")
-    print(f"Total parameters: {total_params:,}")
-    print(f"Trainable parameters: {trainable_params:,}")
 
     # Training loop
     best_valid_loss = float('inf')
 
-    for epoch in range(n_epochs):
-        print(f"\n{'='*50}")
-        print(f"Epoch {epoch+1}/{n_epochs}")
-        print(f"{'='*50}")
-        
+    # Create progress bar for epochs
+    epoch_pbar = tqdm(range(n_epochs), desc='Training Progress', position=0)
+
+    for epoch in epoch_pbar:
         model.train()
         train_loss = 0
         train_correct = 0
         train_total = 0
         start_time = time.time()
         
-        for batch_idx, (data, target) in enumerate(train_loader):
-            print(f"\nProcessing batch {batch_idx+1}/{len(train_loader)}")
-            print(f"Batch input shape: {data.shape}")
-            print(f"Batch target shape: {target.shape}")
-            
+        # Create progress bar for training batches
+        train_pbar = tqdm(enumerate(train_loader), total=len(train_loader), 
+                         desc=f'Epoch {epoch+1}/{n_epochs} [Train]', 
+                         position=1, leave=False)
+        
+        for batch_idx, (data, target) in train_pbar:
             data, target = data.to(device), target.to(device)
-            print(f"Data moved to device: {device}")
             
             # Forward pass
             optimizer.zero_grad()
-            try:
-                output = model(data)
-                print(f"Forward pass successful. Output shape: {output.shape}")
-            except Exception as e:
-                print(f"Error in forward pass: {str(e)}")
-                raise
-            
+            output = model(data)
             loss = criterion(output, target)
-            print(f"Loss calculated: {loss.item():.4f}")
             
             # Backward pass
             loss.backward()
             optimizer.step()
-            print("Backward pass completed")
             
             # Calculate accuracy
             _, predicted = torch.max(output.data, 1)
@@ -90,30 +62,38 @@ if __name__ == '__main__':
             train_correct += (predicted == target).sum().item()
             train_loss += loss.item()
             
-            if batch_idx % 100 == 0:
-                current_accuracy = 100 * train_correct / train_total
-                print(f'Batch: {batch_idx}/{len(train_loader)}, Loss: {loss.item():.4f}, Running Accuracy: {current_accuracy:.2f}%')
+            # Update progress bar with current metrics
+            current_accuracy = 100 * train_correct / train_total
+            train_pbar.set_postfix({
+                'loss': f'{loss.item():.4f}',
+                'accuracy': f'{current_accuracy:.2f}%'
+            })
         
         # Validation phase
-        print("\nStarting validation phase...")
         model.eval()
         valid_loss = 0
         valid_correct = 0
         valid_total = 0
         
+        # Create progress bar for validation batches
+        valid_pbar = tqdm(valid_loader, desc=f'Epoch {epoch+1}/{n_epochs} [Valid]', 
+                         position=1, leave=False)
+        
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(valid_loader):
-                print(f"Validating batch {batch_idx+1}/{len(valid_loader)}")
+            for data, target in valid_pbar:
                 data, target = data.to(device), target.to(device)
-                try:
-                    output = model(data)
-                    valid_loss += criterion(output, target).item()
-                    _, predicted = torch.max(output.data, 1)
-                    valid_total += target.size(0)
-                    valid_correct += (predicted == target).sum().item()
-                except Exception as e:
-                    print(f"Error during validation: {str(e)}")
-                    raise
+                output = model(data)
+                valid_loss += criterion(output, target).item()
+                _, predicted = torch.max(output.data, 1)
+                valid_total += target.size(0)
+                valid_correct += (predicted == target).sum().item()
+                
+                # Update validation progress bar
+                current_valid_accuracy = 100 * valid_correct / valid_total
+                valid_pbar.set_postfix({
+                    'loss': f'{valid_loss/valid_total:.4f}',
+                    'accuracy': f'{current_valid_accuracy:.2f}%'
+                })
         
         # Calculate average losses and accuracies
         train_loss /= len(train_loader)
@@ -122,15 +102,19 @@ if __name__ == '__main__':
         valid_accuracy = 100 * valid_correct / valid_total
         epoch_time = time.time() - start_time
         
-        print(f'\nEpoch {epoch+1}/{n_epochs} Summary:')
-        print(f'Time taken: {epoch_time:.2f}s')
-        print(f'Train Loss: {train_loss:.4f}, Train Accuracy: {train_accuracy:.2f}%')
-        print(f'Valid Loss: {valid_loss:.4f}, Valid Accuracy: {valid_accuracy:.2f}%')
+        # Update epoch progress bar with summary
+        epoch_pbar.set_postfix({
+            'time': f'{epoch_time:.2f}s',
+            'train_loss': f'{train_loss:.4f}',
+            'train_acc': f'{train_accuracy:.2f}%',
+            'valid_loss': f'{valid_loss:.4f}',
+            'valid_acc': f'{valid_accuracy:.2f}%'
+        })
         
         # Save the best model
         if valid_loss < best_valid_loss:
             best_valid_loss = valid_loss
             torch.save(model.state_dict(), 'best_model.pth')
-            print('New best model saved as best_model.pth')
+            tqdm.write('New best model saved')
 
-    print('\nTraining completed!') 
+    print('\nTraining completed!')
