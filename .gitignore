@@ -5,3 +5,5 @@
 
 # pycache
 __pycache__/
+
+*.pth
