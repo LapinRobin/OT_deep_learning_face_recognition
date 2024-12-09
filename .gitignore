@@ -5,3 +5,7 @@
 
 # pycache
 __pycache__/
+
+*.pth
+*.jpg
+*.png
