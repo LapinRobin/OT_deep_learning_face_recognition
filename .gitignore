@@ -1,0 +1,7 @@
+.DS_Store
+
+/test_images/
+/train_images/
+
+# pycache
+__pycache__/
