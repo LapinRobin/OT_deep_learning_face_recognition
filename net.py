@@ -17,45 +17,45 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(32, 16)
         # Output layer: 16 inputs, 2 outputs (one for each class)
         self.fc3 = nn.Linear(16, 2)
-        print("Network initialized with architecture:")
-        print(f"conv1: {self.conv1}")
-        print(f"pool: {self.pool}")
-        print(f"conv2: {self.conv2}")
-        print(f"fc1: {self.fc1}")
-        print(f"fc2: {self.fc2}")
-        print(f"fc3: {self.fc3}")
+        # print("Network initialized with architecture:")
+        # print(f"conv1: {self.conv1}")
+        # print(f"pool: {self.pool}")
+        # print(f"conv2: {self.conv2}")
+        # print(f"fc1: {self.fc1}")
+        # print(f"fc2: {self.fc2}")
+        # print(f"fc3: {self.fc3}")
 
     def forward(self, x):
-        print(f"\nInput shape: {x.shape}")
+        # print(f"\nInput shape: {x.shape}")
         
         # First conv + ReLU + pooling
         x = self.conv1(x)
-        print(f"After conv1 shape: {x.shape}")
+        # print(f"After conv1 shape: {x.shape}")
         x = F.relu(x)
-        print(f"After ReLU1 shape: {x.shape}")
+        # print(f"After ReLU1 shape: {x.shape}")
         x = self.pool(x)
-        print(f"After first pooling shape: {x.shape}")
+        # print(f"After first pooling shape: {x.shape}")
         
         # Second conv + ReLU + pooling
         x = self.conv2(x)
-        print(f"After conv2 shape: {x.shape}")
+        # print(f"After conv2 shape: {x.shape}")
         x = F.relu(x)
-        print(f"After ReLU2 shape: {x.shape}")
+        # print(f"After ReLU2 shape: {x.shape}")
         x = self.pool(x)
-        print(f"After second pooling shape: {x.shape}")
+        # print(f"After second pooling shape: {x.shape}")
         
         # Print the total number of elements before flattening
-        print(f"Total elements before flattening: {x.numel()}")
-        print(f"Expected elements after flattening: {16 * 6 * 6}")
+        # print(f"Total elements before flattening: {x.numel()}")
+        # print(f"Expected elements after flattening: {16 * 6 * 6}")
         
         # Flatten the 2D feature maps into 1D vector
         try:
             x = x.view(-1, 16 * 6 * 6)
-            print(f"After flattening shape: {x.shape}")
+            # print(f"After flattening shape: {x.shape}")
         except RuntimeError as e:
-            print(f"Error during flattening: {str(e)}")
-            print(f"Current tensor shape: {x.shape}")
-            print(f"Attempting to reshape to: [-1, {16 * 6 * 6}]")
+            # print(f"Error during flattening: {str(e)}")
+            # print(f"Current tensor shape: {x.shape}")
+            # print(f"Attempting to reshape to: [-1, {16 * 6 * 6}]")
             raise
         
         '''
@@ -70,15 +70,14 @@ class Net(nn.Module):
           - Flattened size = 16 channels * 6 height * 6 width = 576
         '''
         x = F.relu(self.fc1(x))
-        print(f"After fc1 shape: {x.shape}")
+        # print(f"After fc1 shape: {x.shape}")
         
         # Second fully connected layer with ReLU
         x = F.relu(self.fc2(x))
-        print(f"After fc2 shape: {x.shape}")
+        # print(f"After fc2 shape: {x.shape}")
         
         # Output layer (no activation - will be handled by loss function)
         x = self.fc3(x)
-        print(f"Final output shape: {x.shape}")
+        # print(f"Final output shape: {x.shape}")
         return x
-
 
