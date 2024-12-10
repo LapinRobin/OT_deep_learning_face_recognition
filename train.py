@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from load_data import train_loader, valid_loader
-from net import Net
+from net import Net, Net2
 import time
 from tqdm import tqdm
 
@@ -19,12 +19,22 @@ if __name__ == '__main__':
 
     # Hyperparameters
     n_epochs = 3
-    learning_rate = 0.001
+    learning_rate = 0.0005
 
     # Initialize the model
-    model = Net().to(device)
-    criterion = nn.CrossEntropyLoss()
+    model = Net2().to(device)
+    
+    # Add class weights to penalize false negatives more heavily
+    # [noface_weight, face_weight] 
+    class_weights = torch.FloatTensor([0.1, 12.0]).to(device)  # Increased weight for face class to penalize false negatives more
+    criterion = nn.CrossEntropyLoss(weight=class_weights)
+    
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    
+    # Add learning rate scheduler
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', 
+                                                    factor=0.5, patience=2,
+                                                    verbose=True)
 
     # Training loop
     best_valid_loss = float('inf')
@@ -94,6 +104,9 @@ if __name__ == '__main__':
                     'loss': f'{valid_loss/valid_total:.4f}',
                     'accuracy': f'{current_valid_accuracy:.2f}%'
                 })
+        
+        # After validation phase, add scheduler step
+        scheduler.step(valid_loss)
         
         # Calculate average losses and accuracies
         train_loss /= len(train_loader)

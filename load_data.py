@@ -3,6 +3,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import SubsetRandomSampler
+from torchsampler import ImbalancedDatasetSampler
 
 train_dir = './train_images'
 test_dir = './test_images'
@@ -24,12 +25,24 @@ np.random.shuffle(indices_train)
 split_tv = int(np.floor(valid_size * num_train))
 train_new_idx, valid_idx = indices_train[split_tv:],indices_train[:split_tv]
 
-train_sampler = SubsetRandomSampler(train_new_idx)
-valid_sampler = SubsetRandomSampler(valid_idx)
+train_loader = torch.utils.data.DataLoader(
+    train_data, batch_size=batch_size,
+    sampler=ImbalancedDatasetSampler(train_data, indices=train_new_idx),
+    num_workers=1)
 
-train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, sampler=train_sampler, num_workers=1)
-valid_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, sampler=valid_sampler, num_workers=1)
-test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=True, num_workers=1)
+valid_sampler = SubsetRandomSampler(valid_idx)
+valid_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, 
+                                         sampler=valid_sampler, num_workers=1)
+
+test_loader_balanced = torch.utils.data.DataLoader(
+    test_data, batch_size=batch_size,
+    sampler=ImbalancedDatasetSampler(test_data),
+    num_workers=1)
+
+test_loader = torch.utils.data.DataLoader(
+    test_data, batch_size=batch_size,
+    shuffle=True, num_workers=1)
+
 classes = ('noface','face')
 
 # for epoch in range(1, n_epochs+1):
