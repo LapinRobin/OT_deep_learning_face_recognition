@@ -2,7 +2,7 @@
 
 /test_images/
 /train_images/
-
+/venv/
 # pycache
 __pycache__/
 

@@ -125,3 +125,34 @@ Confusion matrix has been saved as 'confusion_matrix.png'
 Per-class Accuracy:
 noface: 0.9636 (3652/3790)
 face: 0.9070 (3481/3838)
+
+
+MODEL EVALUATION RESULTS (5 EPOCHS, 32 BATCH SIZE, NET2 improved, AdaBoost)
+
+Overall Metrics:
+Accuracy: 0.9198
+Precision: 0.9206
+Recall: 0.9198
+F1 Score: 0.9197
+ROC AUC Score: 0.9661
+
+Confusion Matrix:
+[[3670  217]
+ [ 395 3346]]
+
+Detailed Classification Report:
+              precision    recall  f1-score   support
+
+      noface       0.90      0.94      0.92      3887
+        face       0.94      0.89      0.92      3741
+
+    accuracy                           0.92      7628
+   macro avg       0.92      0.92      0.92      7628
+weighted avg       0.92      0.92      0.92      7628
+
+
+Confusion matrix has been saved as 'confusion_matrix.png'
+
+Per-class Accuracy:
+noface: 0.9442 (3670/3887)
+face: 0.8944 (3346/3741)
