@@ -1,7 +1,7 @@
 import torch
 import numpy as np
-from net import Net
-from load_data import test_loader, classes
+from net import Net, Net2
+from load_data import test_loader, classes, test_loader_balanced
 from tqdm import tqdm
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
@@ -123,14 +123,17 @@ if __name__ == '__main__':
     print(f'Using device: {device}')
     
     # Load the model
-    model = Net().to(device)
+    model = Net2().to(device)
     try:
-        model.load_state_dict(torch.load('best_model.pth'))
+        model.load_state_dict(torch.load('best_model.pth', weights_only=True))
         print("Successfully loaded model from 'best_model.pth'")
-    except:
-        print("Error: Could not load model. Make sure 'best_model.pth' exists.")
+    except FileNotFoundError:
+        print("Error: Could not find 'best_model.pth'. Please ensure the file exists in the current directory.")
+        exit(1)
+    except Exception as e:
+        print(f"Error loading model: {str(e)}")
         exit(1)
     
     # Test the model
-    metrics = test_model(model, device, test_loader)
+    metrics = test_model(model, device, test_loader_balanced)
 
