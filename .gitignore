@@ -3,6 +3,9 @@
 /test_images/
 /train_images/
 /venv/
+/dataset_rcnn/
+/region_detection_results/
+/region_proposals_results/
 # pycache
 __pycache__/
 
